@@ -10,6 +10,19 @@ function triggerHaptic() {
   }
 }
 
+const SVG_X = `
+  <svg viewBox="0 0 100 100" stroke-width="12" stroke-linecap="round">
+    <line x1="20" y1="20" x2="80" y2="80" />
+    <line x1="80" y1="20" x2="20" y2="80" />
+  </svg>
+`;
+
+const SVG_O = `
+  <svg viewBox="0 0 100 100">
+    <circle cx="50" cy="50" r="32" stroke-width="12" fill="none" />
+  </svg>
+`;
+
 // Состояние приложения
 const state = {
   theme: localStorage.getItem('theme') || 'light',
@@ -76,7 +89,7 @@ function startNewGame() {
   modal.classList.remove('active');
 
   cells.forEach(cell => {
-    cell.textContent = '';
+    cell.innerHTML = ''; // Очищаем SVG внутри ячеек
     cell.className = 'cell';
   });
 
@@ -146,7 +159,7 @@ function handleCellClick(e) {
 // Установка символа на поле
 function executeMove(index, player) {
   state.board[index] = player;
-  cells[index].textContent = player;
+  cells[index].innerHTML = player === 'X' ? SVG_X : SVG_O;
   cells[index].classList.add(player.toLowerCase());
 }
 
