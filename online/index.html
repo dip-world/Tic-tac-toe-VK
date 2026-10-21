@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Крестики-Нолики VK</title>
+  <style>
+    :root {
+      --bg-color: #edeef0;
+      --card-bg: #ffffff;
+      --text-main: #000000;
+      --text-muted: #818c99;
+      --accent-color: #2688eb;
+      --accent-hover: #1f72c4;
+      --cell-bg: #f2f3f5;
+      --cell-hover: #e1e3e6;
+      --x-color: #2688eb;
+      --o-color: #e64646;
+      --border-color: #dce1e6;
+      --radius: 14px;
+    }
+
+    [data-theme="dark"] {
+      --bg-color: #19191a;
+      --card-bg: #232324;
+      --text-main: #ffffff;
+      --text-muted: #76787a;
+      --accent-color: #529ef4;
+      --accent-hover: #3b88e0;
+      --cell-bg: #2c2d2e;
+      --cell-hover: #363738;
+      --x-color: #529ef4;
+      --o-color: #ff5c5c;
+      --border-color: #363738;
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 16px;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 400px;
+      background-color: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+      padding: 24px 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .screen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .screen.active {
+      display: flex;
+    }
+
+    h1 {
+      font-size: 26px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    h2 {
+      font-size: 20px;
+      margin-bottom: 20px;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 14px;
+      margin-bottom: 28px;
+    }
+
+    .btn-group {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      font-size: 16px;
+      font-weight: 600;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: transform 0.05s ease, opacity 0.15s ease;
+    }
+
+    button:active {
+      transform: scale(0.98);
+      opacity: 0.85;
+    }
+
+    .btn-primary {
+      background-color: var(--accent-color);
+      color: #ffffff;
+    }
+
+    .btn-secondary {
+      background-color: var(--cell-bg);
+      color: var(--text-main);
+    }
+
+    .top-bar {
+      width: 100%;
+      display: flex;
+      justify-content: flex-start;
+      margin-bottom: 16px;
+    }
+
+    .btn-back {
+      width: auto;
+      padding: 8px 14px;
+      font-size: 14px;
+      background-color: var(--cell-bg);
+      color: var(--text-main);
+    }
+
+    .status-text {
+      font-size: 17px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      min-height: 24px;
+    }
+
+    .board {
+      width: 100%;
+      max-width: 320px;
+      aspect-ratio: 1 / 1;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .cell {
+      background-color: var(--cell-bg);
+      border-radius: 12px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 52px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+    }
+
+    .cell:hover {
+      background-color: var(--cell-hover);
+    }
+
+    .cell.x { color: var(--x-color); }
+    .cell.o { color: var(--o-color); }
+
+    .modal-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(4px);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      z-index: 10;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal {
+      background-color: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 24px 20px;
+      width: 100%;
+      max-width: 320px;
+      text-align: center;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    }
+
+    .modal-icon {
+      font-size: 46px;
+      margin-bottom: 12px;
+    }
+
+    .modal-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+
+    .setting-group {
+      width: 100%;
+      margin-bottom: 20px;
+      text-align: left;
+    }
+
+    .setting-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .segmented-control {
+      display: flex;
+      background-color: var(--cell-bg);
+      border-radius: 10px;
+      padding: 3px;
+      gap: 3px;
+    }
+
+    .segmented-btn {
+      flex: 1;
+      padding: 9px 0;
+      font-size: 13px;
+      font-weight: 600;
+      background: transparent;
+      color: var(--text-muted);
+      border-radius: 8px;
+      border: none;
+    }
+
+    .segmented-btn.active {
+      background-color: var(--card-bg);
+      color: var(--text-main);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    }
+
+    .about-content {
+      font-size: 15px;
+      line-height: 1.5;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+      text-align: left;
+    }
+  </style>
+  <!-- VK Bridge SDK для интеграции с VK Mini Apps -->
+  <script src="https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js"></script>
+</head>
+<body data-theme="light">
+
+  <div class="container">
+    <!-- Главное меню -->
+    <div id="screen-menu" class="screen active">
+      <h1>Крестики-Нолики</h1>
+      <p class="subtitle">Быстрая игра против бота</p>
+      <div class="btn-group">
+        <button id="btn-start" class="btn-primary">Новая игра</button>
+        <button id="btn-settings" class="btn-secondary">Настройки</button>
+        <button id="btn-about" class="btn-secondary">Об игре</button>
+      </div>
+    </div>
+
+    <!-- Игровой экран -->
+    <div id="screen-game" class="screen">
+      <div class="top-bar">
+        <button id="btn-game-back" class="btn-back">← В меню</button>
+      </div>
+      <div id="status-text" class="status-text">Ваш ход (X)</div>
+      <div class="board" id="board">
+        <div class="cell" data-index="0"></div>
+        <div class="cell" data-index="1"></div>
+        <div class="cell" data-index="2"></div>
+        <div class="cell" data-index="3"></div>
+        <div class="cell" data-index="4"></div>
+        <div class="cell" data-index="5"></div>
+        <div class="cell" data-index="6"></div>
+        <div class="cell" data-index="7"></div>
+        <div class="cell" data-index="8"></div>
+      </div>
+    </div>
+
+    <!-- Настройки -->
+    <div id="screen-settings" class="screen">
+      <div class="top-bar">
+        <button id="btn-settings-back" class="btn-back">← Назад</button>
+      </div>
+      <h2>Настройки</h2>
+
+      <div class="setting-group">
+        <div class="setting-label">Первый ход</div>
+        <div class="segmented-control" id="control-first-move">
+          <button class="segmented-btn active" data-val="player">Игрок</button>
+          <button class="segmented-btn" data-val="opponent">Бот</button>
+          <button class="segmented-btn" data-val="random">Случайно</button>
+        </div>
+      </div>
+
+      <div class="setting-group">
+        <div class="setting-label">Тема оформления</div>
+        <div class="segmented-control" id="control-theme">
+          <button class="segmented-btn active" data-val="light">Светлая</button>
+          <button class="segmented-btn" data-val="dark">Тёмная</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Об игре -->
+    <div id="screen-about" class="screen">
+      <div class="top-bar">
+        <button id="btn-about-back" class="btn-back">← Назад</button>
+      </div>
+      <h2>Об игре</h2>
+      <div class="about-content">
+        Мини-приложение для игры в классические «Крестики-Нолики» против искусственного интеллекта.<br><br>
+        Игрок всегда управляет символом <b>X</b>, а бот — <b>O</b>.
+      </div>
+      <button id="btn-about-ok" class="btn-primary">Понятно</button>
+    </div>
+
+    <!-- Модальное окно окончания игры -->
+    <div id="game-modal" class="modal-overlay">
+      <div class="modal">
+        <div id="modal-icon" class="modal-icon">🎉</div>
+        <div id="modal-title" class="modal-title">Поздравляем с победой!</div>
+        <div class="btn-group">
+          <button id="btn-modal-restart" class="btn-primary">Играть снова</button>
+          <button id="btn-modal-menu" class="btn-secondary">В меню</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
